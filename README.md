@@ -310,6 +310,62 @@ Generate Reports
 
 ---
 
+# 🛠️ Local Installation & Backend Setup
+
+To connect the React frontend with the FastAPI backend and run the system locally using PostgreSQL:
+
+### 1. PostgreSQL Database Setup
+1. Install PostgreSQL 17 or download the Windows binaries zip package if you don't have administrator rights.
+2. Initialize the database directory cluster:
+   ```powershell
+   .\initdb.exe -D C:\Users\Asus\pgsql\data -U postgres -E UTF8 --locale=C
+   ```
+3. Start the local PostgreSQL server instance in a separate background console session:
+   ```powershell
+   Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = '"C:\Users\Asus\pgsql\pgsql\bin\postgres.exe" -D "C:\Users\Asus\pgsql\data"' }
+   ```
+4. Create the `transitops` database:
+   ```powershell
+   .\createdb.exe -U postgres transitops
+   ```
+
+### 2. Backend API Setup
+1. Navigate to the `backend` folder.
+2. Create and activate a Python virtual environment:
+   ```powershell
+   py -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+   ```
+3. Install Python dependencies (note: `psycopg2-binary` must be version `>=2.9.12` to support prebuilt wheels on Python 3.13):
+   ```powershell
+   pip install -r requirements.txt
+   ```
+4. Create a `.env` configuration file in the backend root:
+   ```env
+   DATABASE_URL=postgresql://postgres:password@localhost:5432/transitops
+   SECRET_KEY=transitops-super-secret-key-change-this-very-long-and-random-12345
+   ALGORITHM=HS256
+   ACCESS_TOKEN_EXPIRE_MINUTES=30
+   FUEL_PRICE_PER_LITER=100
+   ```
+5. Launch the backend server:
+   ```powershell
+   .\.venv\Scripts\uvicorn.exe main:app --host 0.0.0.0 --port 8000
+   ```
+   *Note: Application startup automatically migrates tables and seeds initial demo roles (`fleet@transitops.com`, `dispatch@transitops.com`, `safety@transitops.com`, `finance@transitops.com`) with the password `password123`.*
+
+### 3. Frontend Integration
+1. The frontend API connection is configured in `src/services/api.ts` and maps calls to `http://localhost:8000/api`.
+2. The page actions in `src/pages` have been wired through `src/services/mockApi.ts` to execute real asynchronous Axios requests instead of mockup responses, managing camelCase/snake_case translation automatically.
+3. Install packages and start the frontend:
+   ```bash
+   npm install
+   npm run dev
+   ```
+4. Open the local address in the browser (usually `http://localhost:3001/`).
+
+---
+
 # 📄 License
 
 This project is developed for educational, academic, and hackathon purposes. It can be extended and customized for enterprise fleet management solutions.

@@ -48,16 +48,56 @@ export function FuelExpenses() {
   const otherTotal = otherExpenses.reduce((sum, e) => sum + e.amount, 0);
   const totalCost = fuelTotal + maintenanceTotal + otherTotal;
 
-  const handleLogFuel = (e: React.FormEvent) => {
+  // Fuel form states
+  const [fuelVehicleId, setFuelVehicleId] = useState('');
+  const [fuelDescription, setFuelDescription] = useState('');
+  const [fuelAmount, setFuelAmount] = useState('');
+  const [fuelLiters, setFuelLiters] = useState('');
+
+  // Other expense form states
+  const [expenseDescription, setExpenseDescription] = useState('');
+  const [expenseAmount, setExpenseAmount] = useState('');
+
+  const handleLogFuel = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success('Fuel logged successfully');
-    setIsFuelModalOpen(false);
+    try {
+      await expenseService.createExpense({
+        type: 'Fuel',
+        vehicleId: Number(fuelVehicleId),
+        amount: Number(fuelAmount),
+        liters: Number(fuelLiters),
+        description: fuelDescription
+      });
+      toast.success('Fuel logged successfully');
+      setIsFuelModalOpen(false);
+      setFuelVehicleId('');
+      setFuelDescription('');
+      setFuelAmount('');
+      setFuelLiters('');
+      fetchData();
+    } catch (err: any) {
+      const msg = err.response?.data?.detail?.detail || err.response?.data?.detail || 'Failed to log fuel';
+      toast.error(msg);
+    }
   };
 
-  const handleAddExpense = (e: React.FormEvent) => {
+  const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success('Expense added successfully');
-    setIsExpenseModalOpen(false);
+    try {
+      await expenseService.createExpense({
+        type: 'Other',
+        amount: Number(expenseAmount),
+        description: expenseDescription
+      });
+      toast.success('Expense added successfully');
+      setIsExpenseModalOpen(false);
+      setExpenseDescription('');
+      setExpenseAmount('');
+      fetchData();
+    } catch (err: any) {
+      const msg = err.response?.data?.detail?.detail || err.response?.data?.detail || 'Failed to add expense';
+      toast.error(msg);
+    }
   };
 
   return (
@@ -176,7 +216,7 @@ export function FuelExpenses() {
         <form onSubmit={handleLogFuel} className="space-y-4">
           <div className="space-y-1">
             <label className="text-xs font-medium text-text-secondary uppercase">Vehicle</label>
-            <select required className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent">
+            <select required value={fuelVehicleId} onChange={e => setFuelVehicleId(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent">
               <option value="">Select Vehicle</option>
               {vehicles.map(v => (
                 <option key={v.id} value={v.id}>{v.regNo} - {v.name}</option>
@@ -185,11 +225,17 @@ export function FuelExpenses() {
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-text-secondary uppercase">Description</label>
-            <input type="text" required className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="e.g. 50 Liters Diesel" />
+            <input type="text" required value={fuelDescription} onChange={e => setFuelDescription(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="e.g. 50 Liters Diesel" />
           </div>
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-text-secondary uppercase">Amount ($)</label>
-            <input type="number" required min="1" className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="0" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-text-secondary uppercase">Liters</label>
+              <input type="number" required min="1" value={fuelLiters} onChange={e => setFuelLiters(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="0" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-text-secondary uppercase">Amount ($)</label>
+              <input type="number" required min="1" value={fuelAmount} onChange={e => setFuelAmount(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="0" />
+            </div>
           </div>
           <div className="pt-2">
             <button type="submit" className="w-full bg-accent hover:bg-accent-hover text-white font-medium py-2 rounded-md transition-colors">
@@ -203,11 +249,11 @@ export function FuelExpenses() {
         <form onSubmit={handleAddExpense} className="space-y-4">
           <div className="space-y-1">
             <label className="text-xs font-medium text-text-secondary uppercase">Description</label>
-            <input type="text" required className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="e.g. Toll Fees" />
+            <input type="text" required value={expenseDescription} onChange={e => setExpenseDescription(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="e.g. Toll Fees" />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-text-secondary uppercase">Amount ($)</label>
-            <input type="number" required min="1" className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="0" />
+            <input type="number" required min="1" value={expenseAmount} onChange={e => setExpenseAmount(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="0" />
           </div>
           <div className="pt-2">
             <button type="submit" className="w-full bg-info hover:bg-info/80 text-white font-medium py-2 rounded-md transition-colors">

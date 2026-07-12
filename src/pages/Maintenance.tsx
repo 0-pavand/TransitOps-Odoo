@@ -37,14 +37,38 @@ export function Maintenance() {
     }
   };
 
-  const handleLogService = (e: React.FormEvent) => {
+  const handleLogService = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success('Service logged successfully!');
-    setSelectedVehicleId('');
-    setServiceType('');
-    setDescription('');
-    setMechanic('');
-    setEstCost('');
+    try {
+      await maintenanceService.createMaintenanceLog({
+        vehicleId: Number(selectedVehicleId),
+        serviceType,
+        description,
+        mechanic,
+        estCost: Number(estCost)
+      });
+      toast.success('Service logged successfully!');
+      setSelectedVehicleId('');
+      setServiceType('');
+      setDescription('');
+      setMechanic('');
+      setEstCost('');
+      fetchData();
+    } catch (err: any) {
+      const msg = err.response?.data?.detail?.detail || err.response?.data?.detail || 'Failed to log maintenance';
+      toast.error(msg);
+    }
+  };
+
+  const handleResolve = async (id: string) => {
+    try {
+      await maintenanceService.resolveMaintenanceLog(id);
+      toast.success('Maintenance resolved!');
+      fetchData();
+    } catch (err: any) {
+      const msg = err.response?.data?.detail?.detail || err.response?.data?.detail || 'Failed to resolve maintenance';
+      toast.error(msg);
+    }
   };
 
   return (
@@ -153,7 +177,7 @@ export function Maintenance() {
                           {log.status !== 'Resolved' && (
                             <button 
                               className="text-xs flex items-center justify-end w-full text-success hover:text-white px-2 py-1 rounded border border-transparent hover:border-success/30 hover:bg-success/10 transition-colors"
-                              onClick={() => toast.success('Marked as Resolved')}
+                              onClick={() => handleResolve(log.id)}
                             >
                               <CheckCircle className="w-3.5 h-3.5 mr-1" />
                               Resolve

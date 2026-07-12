@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Role } from '../types';
@@ -11,6 +11,18 @@ interface RoleGuardProps {
 
 export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   const { role, isLoading } = useAuth();
+  const toastShownRef = useRef(false);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
+
+  const isAllowed = role ? allowedRoles.includes(role) : false;
+
+  useEffect(() => {
+    if (!isLoading && role && !isAllowed && !toastShownRef.current) {
+      toastShownRef.current = true;
+      toast.error('Access Denied: You do not have permission to view this page.');
+      setShouldRedirect(true);
+    }
+  }, [isLoading, role, isAllowed]);
 
   if (isLoading) {
     return (
@@ -24,8 +36,7 @@ export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
     return <Navigate to="/login" replace />;
   }
 
-  if (!allowedRoles.includes(role)) {
-    toast.error('Access Denied: You do not have permission to view this page.');
+  if (!isAllowed || shouldRedirect) {
     return <Navigate to="/dashboard" replace />;
   }
 

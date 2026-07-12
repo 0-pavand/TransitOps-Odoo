@@ -4,7 +4,7 @@ import { driverService } from '../services/mockApi';
 import { Driver } from '../types';
 import { StatusBadge } from '../components/StatusBadge';
 import { Modal } from '../components/Modal';
-import { Search, Plus, AlertOctagon } from 'lucide-react';
+import { Search, Plus, Filter, AlertOctagon } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export function Drivers() {
@@ -13,10 +13,9 @@ export function Drivers() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Controlled form state
-  const [dName, setDName] = useState('');
+  // Form states
+  const [name, setName] = useState('');
   const [licenseId, setLicenseId] = useState('');
   const [category, setCategory] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
@@ -41,56 +40,55 @@ export function Drivers() {
 
   const hasFullAccess = role === 'fleet_manager' || role === 'safety_officer';
 
-  const filteredDrivers = drivers.filter(d =>
-    d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredDrivers = drivers.filter(d => 
+    d.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     d.licenseId.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getExpiryStatus = (expiryDate: string) => {
     const expiry = new Date(expiryDate);
     const now = new Date();
-    const diffDays = Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const diffTime = expiry.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
     if (diffDays < 0) return { color: 'text-danger', icon: AlertOctagon, text: 'Expired' };
     if (diffDays <= 30) return { color: 'text-warning', icon: AlertOctagon, text: `Expires in ${diffDays} days` };
     return { color: 'text-text-secondary', icon: null, text: expiryDate };
   };
 
-  const resetForm = () => {
-    setDName(''); setLicenseId(''); setCategory('');
-    setExpiryDate(''); setContact(''); setSafetyScore('100');
-  };
-
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     try {
-      const newDriver = await driverService.createDriver({
-        name: dName,
-        license_id: licenseId,
+      await driverService.createDriver({
+        name,
+        licenseId,
         category,
-        expiry_date: expiryDate,
+        expiryDate,
         contact,
-        safety_score: Number(safetyScore),
+        safetyScore: Number(safetyScore)
       });
-      setDrivers(prev => [...prev, newDriver]);
-      toast.success(`Driver ${newDriver.name} added!`);
+      toast.success('Driver added successfully');
       setIsAddModalOpen(false);
-      resetForm();
+      setName('');
+      setLicenseId('');
+      setCategory('');
+      setExpiryDate('');
+      setContact('');
+      setSafetyScore('100');
+      fetchDrivers();
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || 'Failed to add driver';
+      const msg = err.response?.data?.detail?.detail || err.response?.data?.detail || 'Failed to add driver';
       toast.error(msg);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  const handleStatusUpdate = async (driver: Driver, newStatus: string) => {
+  const handleUpdateStatus = async (id: string, status: string) => {
     try {
-      const updated = await driverService.updateStatus(driver.id, newStatus);
-      setDrivers(prev => prev.map(d => d.id === updated.id ? updated : d));
-      toast.success(`${driver.name} → ${newStatus}`);
+      await driverService.updateDriverStatus(id, status);
+      toast.success(`Status updated to ${status}`);
+      fetchDrivers();
     } catch (err: any) {
-      const msg = err?.response?.data?.detail || 'Status update failed';
+      const msg = err.response?.data?.detail?.detail || err.response?.data?.detail || 'Failed to update status';
       toast.error(msg);
     }
   };
@@ -99,12 +97,12 @@ export function Drivers() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-xl font-semibold">Drivers Registry</h1>
-
+        
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" />
-            <input
-              type="text"
+            <input 
+              type="text" 
               placeholder="Search drivers..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -112,7 +110,7 @@ export function Drivers() {
             />
           </div>
           {hasFullAccess && (
-            <button
+            <button 
               onClick={() => setIsAddModalOpen(true)}
               className="flex items-center px-3 py-2 bg-accent hover:bg-accent-hover text-white rounded-md text-sm font-medium transition-colors"
             >
@@ -163,6 +161,7 @@ export function Drivers() {
                 filteredDrivers.map(driver => {
                   const expiry = getExpiryStatus(driver.expiryDate);
                   const ExpiryIcon = expiry.icon;
+                  
                   return (
                     <tr key={driver.id} className="border-b border-border-subtle hover:bg-bg-hover h-[44px]">
                       <td className="px-6 py-2 font-medium">{driver.name}</td>
@@ -182,37 +181,26 @@ export function Drivers() {
                       {hasFullAccess && (
                         <td className="px-6 py-2 text-right space-x-2">
                           {driver.status === 'Available' && (
-                            <button
+                            <button 
                               className="text-xs text-info hover:text-white px-2 py-1 rounded border border-info/30 hover:bg-info/10 transition-colors"
-                              onClick={() => handleStatusUpdate(driver, 'On Trip')}>
+                              onClick={() => handleUpdateStatus(driver.id, 'On Trip')}>
                               On Trip
                             </button>
                           )}
-                          {driver.status !== 'Off Duty' && driver.status !== 'On Trip' && (
-                            <button
-                              className="text-xs text-text-secondary hover:text-white px-2 py-1 rounded border border-border-subtle hover:bg-bg-input transition-colors"
-                              onClick={() => handleStatusUpdate(driver, 'Off Duty')}>
-                              Off Duty
-                            </button>
-                          )}
-                          {driver.status === 'Off Duty' && (
-                            <button
-                              className="text-xs text-success hover:text-white px-2 py-1 rounded border border-success/30 hover:bg-success/10 transition-colors"
-                              onClick={() => handleStatusUpdate(driver, 'Available')}>
-                              Available
-                            </button>
-                          )}
-                          {driver.status !== 'Suspended' && driver.status !== 'On Trip' && (
-                            <button
-                              className="text-xs text-danger hover:text-white px-2 py-1 rounded border border-danger/30 hover:bg-danger/10 transition-colors"
-                              onClick={() => handleStatusUpdate(driver, 'Suspended')}>
-                              Suspend
-                            </button>
-                          )}
+                          <button 
+                            className="text-xs text-text-secondary hover:text-white px-2 py-1 rounded border border-border-subtle hover:bg-bg-input transition-colors"
+                            onClick={() => handleUpdateStatus(driver.id, 'Off Duty')}>
+                            Off Duty
+                          </button>
+                          <button 
+                            className="text-xs text-danger hover:text-white px-2 py-1 rounded border border-danger/30 hover:bg-danger/10 transition-colors"
+                            onClick={() => handleUpdateStatus(driver.id, 'Suspended')}>
+                            Suspend
+                          </button>
                         </td>
                       )}
                     </tr>
-                  );
+                  )
                 })
               )}
             </tbody>
@@ -220,46 +208,39 @@ export function Drivers() {
         </div>
       </div>
 
-      <Modal isOpen={isAddModalOpen} onClose={() => { setIsAddModalOpen(false); resetForm(); }} title="Add New Driver">
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} title="Add New Driver">
         <form onSubmit={handleAddSubmit} className="space-y-4">
           <div className="space-y-1">
             <label className="text-xs font-medium text-text-secondary uppercase">Full Name</label>
-            <input type="text" required value={dName} onChange={e => setDName(e.target.value)}
-              className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="e.g. John Doe" />
+            <input type="text" required value={name} onChange={e => setName(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="e.g. John Doe" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-medium text-text-secondary uppercase">License Number</label>
-              <input type="text" required value={licenseId} onChange={e => setLicenseId(e.target.value)}
-                className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="DL-XXXXX" />
+              <input type="text" required value={licenseId} onChange={e => setLicenseId(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="DL-XXXXX" />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-text-secondary uppercase">License Category</label>
-              <input type="text" required value={category} onChange={e => setCategory(e.target.value)}
-                className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="e.g. LMV, HMV" />
+              <input type="text" required value={category} onChange={e => setCategory(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="e.g. Class A" />
             </div>
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-text-secondary uppercase">Expiry Date</label>
-            <input type="date" required value={expiryDate} onChange={e => setExpiryDate(e.target.value)}
-              className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" />
+            <input type="date" required value={expiryDate} onChange={e => setExpiryDate(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-medium text-text-secondary uppercase">Contact Number</label>
-              <input type="tel" required value={contact} onChange={e => setContact(e.target.value)}
-                className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="+91..." />
+              <input type="tel" required value={contact} onChange={e => setContact(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="+1..." />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium text-text-secondary uppercase">Initial Safety Score</label>
-              <input type="number" required min="0" max="100" value={safetyScore} onChange={e => setSafetyScore(e.target.value)}
-                className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" />
+              <input type="number" required min="0" max="100" value={safetyScore} onChange={e => setSafetyScore(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" />
             </div>
           </div>
           <div className="pt-2">
-            <button type="submit" disabled={isSubmitting}
-              className="w-full bg-accent hover:bg-accent-hover disabled:opacity-50 text-white font-medium py-2 rounded-md transition-colors">
-              {isSubmitting ? 'Saving...' : 'Save Driver'}
+            <button type="submit" className="w-full bg-accent hover:bg-accent-hover text-white font-medium py-2 rounded-md transition-colors">
+              Save Driver
             </button>
           </div>
         </form>
