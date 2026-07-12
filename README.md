@@ -174,7 +174,7 @@ The dashboard provides a real-time operational overview including:
 
 ## Backend
 
-* Node.js / Express.js *(or any REST API backend)*
+* Python (FASTAPI)
 * JWT Authentication
 * RESTful APIs
 
@@ -182,7 +182,7 @@ The dashboard provides a real-time operational overview including:
 
 ## Database
 
-* MySQL / PostgreSQL / MongoDB *(configurable)*
+PostgreSQL 
 
 ---
 
