@@ -48,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('user', JSON.stringify(user));
       toast.success(`Welcome back, ${user.name}`);
     } catch (error) {
-      toast.error('Invalid credentials (use any mock email + "password")');
+      toast.error('Invalid credentials (use a seeded email + "password123")');
       throw error;
     }
   };
