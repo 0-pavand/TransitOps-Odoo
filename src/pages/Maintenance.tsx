@@ -111,7 +111,7 @@ export function Maintenance() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-text-secondary uppercase">Estimated Cost ($)</label>
+              <label className="text-xs font-medium text-text-secondary uppercase">Estimated Cost (₹)</label>
               <input type="number" required min="0" value={estCost} onChange={e => setEstCost(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="0" />
             </div>
 
@@ -171,7 +171,7 @@ export function Maintenance() {
                           <div className="font-medium">{log.serviceType}</div>
                           <div className="text-xs text-text-secondary mt-1">{log.mechanic}</div>
                         </td>
-                        <td className="px-6 py-4">${log.estCost.toLocaleString()}</td>
+                        <td className="px-6 py-4">₹{log.estCost.toLocaleString()}</td>
                         <td className="px-6 py-4"><StatusBadge status={log.status} /></td>
                         <td className="px-6 py-4 text-right">
                           {log.status !== 'Resolved' && (

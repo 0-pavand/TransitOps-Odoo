@@ -4,7 +4,7 @@ import { driverService } from '../services/mockApi';
 import { Driver } from '../types';
 import { StatusBadge } from '../components/StatusBadge';
 import { Modal } from '../components/Modal';
-import { Search, Plus, Filter, AlertOctagon } from 'lucide-react';
+import { Search, Plus, Filter, AlertOctagon, Trash2, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export function Drivers() {
@@ -51,8 +51,8 @@ export function Drivers() {
     const diffTime = expiry.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    if (diffDays < 0) return { color: 'text-danger', icon: AlertOctagon, text: 'Expired' };
-    if (diffDays <= 30) return { color: 'text-warning', icon: AlertOctagon, text: `Expires in ${diffDays} days` };
+    if (diffDays < 0) return { color: 'text-danger', icon: AlertOctagon, text: `Expired (${expiryDate})` };
+    if (diffDays <= 30) return { color: 'text-warning', icon: AlertOctagon, text: `Expires in ${diffDays} days (${expiryDate})` };
     return { color: 'text-text-secondary', icon: null, text: expiryDate };
   };
 
@@ -89,6 +89,38 @@ export function Drivers() {
       fetchDrivers();
     } catch (err: any) {
       const msg = err.response?.data?.detail?.detail || err.response?.data?.detail || 'Failed to update status';
+      toast.error(msg);
+    }
+  };
+
+  const handleRenew = async (driver: Driver) => {
+    const newDate = prompt('Enter new expiry date (YYYY-MM-DD):', driver.expiryDate);
+    if (!newDate) return;
+    
+    // Validate format
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+      toast.error('Invalid date format. Use YYYY-MM-DD.');
+      return;
+    }
+
+    try {
+      await driverService.renewDriver(driver.id, driver, newDate);
+      toast.success('License renewed successfully');
+      fetchDrivers();
+    } catch (err: any) {
+      const msg = err.response?.data?.detail?.detail || err.response?.data?.detail || 'Failed to renew license';
+      toast.error(msg);
+    }
+  };
+
+  const handleDeleteDriver = async (id: string) => {
+    if (!window.confirm("Are you sure you want to remove this driver?")) return;
+    try {
+      await driverService.deleteDriver(id);
+      toast.success('Driver removed successfully');
+      fetchDrivers();
+    } catch (err: any) {
+      const msg = err.response?.data?.detail?.detail || err.response?.data?.detail || 'Failed to remove driver';
       toast.error(msg);
     }
   };
@@ -180,16 +212,32 @@ export function Drivers() {
                       <td className="px-6 py-2"><StatusBadge status={driver.status} /></td>
                       {hasFullAccess && (
                         <td className="px-6 py-2 text-right">
-                          <select 
-                            value={driver.status}
-                            onChange={(e) => handleUpdateStatus(driver.id, e.target.value)}
-                            className="bg-bg-input text-xs border border-border-subtle rounded px-2 py-1 text-text-secondary focus:outline-none focus:border-accent cursor-pointer outline-none"
-                          >
-                            <option value="Available">Available</option>
-                            <option value="On Trip">On Trip</option>
-                            <option value="Off Duty">Off Duty</option>
-                            <option value="Suspended">Suspended</option>
-                          </select>
+                          <div className="flex items-center justify-end space-x-2">
+                            <select 
+                              value={driver.status}
+                              onChange={(e) => handleUpdateStatus(driver.id, e.target.value)}
+                              className="bg-bg-input text-xs border border-border-subtle rounded px-2 py-1 text-text-secondary focus:outline-none focus:border-accent cursor-pointer outline-none"
+                            >
+                              <option value="Available">Available</option>
+                              <option value="On Trip">On Trip</option>
+                              <option value="Off Duty">Off Duty</option>
+                              <option value="Suspended">Suspended</option>
+                            </select>
+                            <button
+                              onClick={() => handleRenew(driver)}
+                              className="p-1 text-text-secondary hover:text-success hover:bg-success/10 rounded transition-colors"
+                              title="Renew License"
+                            >
+                              <RefreshCw className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteDriver(driver.id)}
+                              className="p-1 text-text-secondary hover:text-danger hover:bg-danger/10 rounded transition-colors"
+                              title="Remove Driver"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       )}
                     </tr>

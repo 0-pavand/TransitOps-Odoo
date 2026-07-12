@@ -16,18 +16,26 @@ export function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
-      const [v, t, d] = await Promise.all([
-        vehicleService.getVehicles(),
-        tripService.getTrips(),
-        driverService.getDrivers()
-      ]);
-      setVehicles(v);
-      setTrips(t);
-      setDrivers(d);
-      setIsLoading(false);
+      try {
+        const [v, t] = await Promise.all([
+          vehicleService.getVehicles(),
+          tripService.getTrips(),
+        ]);
+        setVehicles(v);
+        setTrips(t);
+        // Drivers are only accessible to fleet_manager, dispatcher, safety_officer
+        if (role !== 'financial_analyst') {
+          const d = await driverService.getDrivers();
+          setDrivers(d);
+        }
+      } catch (e) {
+        // ignore individual failures silently
+      } finally {
+        setIsLoading(false);
+      }
     };
     fetchData();
-  }, []);
+  }, [role]);
 
   if (isLoading) {
     return <div className="animate-pulse space-y-6">
@@ -89,7 +97,7 @@ export function Dashboard() {
         )}
 
         {role === 'financial_analyst' && (
-          <KPICard title="Est. Cost Today" value="$4,250" icon={DollarSign} />
+          <KPICard title="Est. Cost Today" value="₹4,250" icon={DollarSign} />
         )}
       </div>
 

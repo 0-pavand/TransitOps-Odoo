@@ -6,6 +6,7 @@ import { StatusBadge } from '../components/StatusBadge';
 import { Search, MapPin, Truck, Users, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { TripMapModal } from '../components/TripMapModal';
+import { getCoordinates, haversineDistance } from '../utils/location';
 
 export function Trips() {
   const { role } = useAuth();
@@ -23,6 +24,18 @@ export function Trips() {
   const [selectedDriverId, setSelectedDriverId] = useState('');
   const [cargoWeight, setCargoWeight] = useState('');
   const [plannedDistance, setPlannedDistance] = useState('');
+  const [isManualDistance, setIsManualDistance] = useState(false);
+
+  useEffect(() => {
+    if (!isManualDistance && source && destination) {
+      const srcCoords = getCoordinates(source);
+      const destCoords = getCoordinates(destination);
+      if (srcCoords && destCoords) {
+        const dist = haversineDistance(srcCoords.lat, srcCoords.lng, destCoords.lat, destCoords.lng);
+        setPlannedDistance(dist.toString());
+      }
+    }
+  }, [source, destination, isManualDistance]);
 
   useEffect(() => {
     fetchData();
@@ -279,10 +292,10 @@ export function Trips() {
                   <p className="text-sm text-text-secondary mb-2">Metrics</p>
                   <p className="font-medium text-sm">Cargo: {activeTrip.cargoWeight} kg</p>
                   <p className="font-medium text-sm">Planned Dist: {activeTrip.plannedDistance} km</p>
-                  {activeTrip.status === 'Completed' && activeTrip.metrics && (
+                  {activeTrip.status === 'Completed' && (
                     <>
-                      <p className="font-medium text-sm mt-2 text-success">Actual Dist: {activeTrip.metrics.distanceCovered} km</p>
-                      <p className="font-medium text-sm text-success">Fuel Consumed: {activeTrip.metrics.fuelConsumed} L</p>
+                      <p className="font-medium text-sm mt-2 text-success">Actual Dist: {activeTrip.actualDistance ?? '-'} km</p>
+                      <p className="font-medium text-sm text-success">Fuel Consumed: {activeTrip.fuelConsumed ?? '-'} L</p>
                     </>
                   )}
                 </div>
@@ -330,9 +343,33 @@ export function Trips() {
                     <label className="text-xs font-medium text-text-secondary uppercase">Cargo Weight (kg)</label>
                     <input type="number" required min="1" value={cargoWeight} onChange={e => setCargoWeight(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="0" />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-text-secondary uppercase">Distance (km)</label>
-                    <input type="number" required min="1" value={plannedDistance} onChange={e => setPlannedDistance(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="0" />
+                  <div className="space-y-1 relative">
+                    <div className="flex justify-between items-center">
+                      <label className="text-xs font-medium text-text-secondary uppercase">Distance (km)</label>
+                      <button 
+                        type="button"
+                        onClick={() => setIsManualDistance(!isManualDistance)}
+                        className="text-[10px] text-accent hover:underline"
+                      >
+                        {isManualDistance ? 'Use estimated' : 'Enter manually'}
+                      </button>
+                    </div>
+                    <input 
+                      type="number" 
+                      required 
+                      min="1" 
+                      value={plannedDistance} 
+                      onChange={e => {
+                        setPlannedDistance(e.target.value);
+                        if (!isManualDistance) setIsManualDistance(true);
+                      }} 
+                      readOnly={!isManualDistance}
+                      className={`w-full border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent ${!isManualDistance ? 'bg-bg-card text-text-secondary cursor-not-allowed' : 'bg-bg-input'}`} 
+                      placeholder="0" 
+                    />
+                    {!isManualDistance && (
+                      <p className="text-[10px] text-text-secondary mt-1">Straight-line distance (est.)</p>
+                    )}
                   </div>
                 </div>
 

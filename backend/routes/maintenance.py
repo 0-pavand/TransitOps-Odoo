@@ -16,7 +16,7 @@ def log_or_404(db: Session, log_id: int):
     return log
 
 @router.get("", response_model=list[MaintenanceResponse])
-def list_logs(vehicle_id: int | None = None, status: str | None = None, db: Session = Depends(get_db), _: User = Depends(require_role("fleet_manager"))):
+def list_logs(vehicle_id: int | None = None, status: str | None = None, db: Session = Depends(get_db), _: User = Depends(require_role("fleet_manager", "dispatcher", "financial_analyst", "safety_officer"))):
     query = db.query(MaintenanceLog)
     if vehicle_id: query = query.filter(MaintenanceLog.vehicle_id == vehicle_id)
     if status: query = query.filter(MaintenanceLog.status == status)

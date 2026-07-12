@@ -198,7 +198,7 @@ export function Fleet() {
                     <td className="px-6 py-2 text-text-secondary">{vehicle.type}</td>
                     <td className="px-6 py-2">{vehicle.capacity.toLocaleString()} kg</td>
                     <td className="px-6 py-2">{vehicle.odometer.toLocaleString()} km</td>
-                    <td className="px-6 py-2">${vehicle.acqCost.toLocaleString()}</td>
+                    <td className="px-6 py-2">₹{vehicle.acqCost.toLocaleString()}</td>
                     <td className="px-6 py-2"><StatusBadge status={vehicle.status} /></td>
                     {isManager && (
                       <td className="px-6 py-2 text-right">
@@ -254,7 +254,7 @@ export function Fleet() {
               <input type="number" required min="1" value={capacity} onChange={e => setCapacity(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="0" />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-text-secondary uppercase">Acquisition Cost ($)</label>
+              <label className="text-xs font-medium text-text-secondary uppercase">Acquisition Cost (₹)</label>
               <input type="number" required min="0" value={acqCost} onChange={e => setAcqCost(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="0" />
             </div>
           </div>

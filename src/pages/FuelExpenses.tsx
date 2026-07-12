@@ -41,10 +41,10 @@ export function FuelExpenses() {
 
   const hasWriteAccess = role === 'fleet_manager' || role === 'dispatcher' || role === 'financial_analyst';
   const fuelLogs = expenses.filter(e => e.type === 'Fuel');
-  const otherExpenses = expenses.filter(e => e.type === 'Other');
+  const otherExpenses = expenses.filter(e => e.type !== 'Fuel');
   
   const fuelTotal = fuelLogs.reduce((sum, e) => sum + e.amount, 0);
-  const maintenanceTotal = maintenance.reduce((sum, m) => sum + m.cost, 0);
+  const maintenanceTotal = maintenance.reduce((sum, m) => sum + (m.estCost || 0), 0);
   const otherTotal = otherExpenses.reduce((sum, e) => sum + e.amount, 0);
   const totalCost = fuelTotal + maintenanceTotal + otherTotal;
 
@@ -55,6 +55,8 @@ export function FuelExpenses() {
   const [fuelLiters, setFuelLiters] = useState('');
 
   // Other expense form states
+  const [expenseVehicleId, setExpenseVehicleId] = useState('');
+  const [expenseType, setExpenseType] = useState('Other');
   const [expenseDescription, setExpenseDescription] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
 
@@ -85,12 +87,15 @@ export function FuelExpenses() {
     e.preventDefault();
     try {
       await expenseService.createExpense({
-        type: 'Other',
+        type: expenseType as any,
+        vehicleId: expenseVehicleId ? Number(expenseVehicleId) : undefined,
         amount: Number(expenseAmount),
         description: expenseDescription
       });
       toast.success('Expense added successfully');
       setIsExpenseModalOpen(false);
+      setExpenseVehicleId('');
+      setExpenseType('Other');
       setExpenseDescription('');
       setExpenseAmount('');
       fetchData();
@@ -154,7 +159,7 @@ export function FuelExpenses() {
                         <td className="px-4 py-2 text-text-secondary">{new Date(log.dateLogged).toLocaleDateString()}</td>
                         <td className="px-4 py-2 font-medium">{v?.regNo || '-'}</td>
                         <td className="px-4 py-2 truncate max-w-[200px]" title={log.description}>{log.description}</td>
-                        <td className="px-4 py-2 text-right text-accent font-medium">${log.amount.toLocaleString()}</td>
+                        <td className="px-4 py-2 text-right text-accent font-medium">₹{log.amount.toLocaleString()}</td>
                       </tr>
                     );
                   })
@@ -174,23 +179,30 @@ export function FuelExpenses() {
               <thead className="text-xs text-text-secondary uppercase border-b border-border-subtle sticky top-0 bg-bg-card">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Date</th>
+                  <th className="px-4 py-3 font-semibold">Vehicle</th>
+                  <th className="px-4 py-3 font-semibold">Type</th>
                   <th className="px-4 py-3 font-semibold">Description</th>
                   <th className="px-4 py-3 font-semibold text-right">Amount</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoading ? (
-                  <tr><td colSpan={3} className="px-4 py-8 text-center"><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-accent mx-auto"></div></td></tr>
+                  <tr><td colSpan={5} className="px-4 py-8 text-center"><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-accent mx-auto"></div></td></tr>
                 ) : otherExpenses.length === 0 ? (
-                  <tr><td colSpan={3} className="px-4 py-8 text-center text-text-secondary">No other expenses.</td></tr>
+                  <tr><td colSpan={5} className="px-4 py-8 text-center text-text-secondary">No other expenses.</td></tr>
                 ) : (
-                  otherExpenses.map(log => (
-                    <tr key={log.id} className="border-b border-border-subtle hover:bg-bg-hover h-[44px]">
-                      <td className="px-4 py-2 text-text-secondary">{new Date(log.dateLogged).toLocaleDateString()}</td>
-                      <td className="px-4 py-2 truncate max-w-[250px]" title={log.description}>{log.description}</td>
-                      <td className="px-4 py-2 text-right text-info font-medium">${log.amount.toLocaleString()}</td>
-                    </tr>
-                  ))
+                  otherExpenses.map(log => {
+                    const v = vehicles.find(x => x.id === log.vehicleId);
+                    return (
+                      <tr key={log.id} className="border-b border-border-subtle hover:bg-bg-hover h-[44px]">
+                        <td className="px-4 py-2 text-text-secondary">{new Date(log.dateLogged).toLocaleDateString()}</td>
+                        <td className="px-4 py-2 font-medium">{v?.regNo || '-'}</td>
+                        <td className="px-4 py-2 text-text-secondary">{log.type}</td>
+                        <td className="px-4 py-2 truncate max-w-[200px]" title={log.description}>{log.description}</td>
+                        <td className="px-4 py-2 text-right text-info font-medium">₹{log.amount.toLocaleString()}</td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -207,7 +219,7 @@ export function FuelExpenses() {
           <div className="p-3 bg-accent/10 rounded-lg hidden sm:block">
             <DollarSign className="w-8 h-8 text-accent" />
           </div>
-          <span className="text-4xl font-bold text-accent">${totalCost.toLocaleString()}</span>
+          <span className="text-4xl font-bold text-accent">₹{totalCost.toLocaleString()}</span>
         </div>
       </div>
 
@@ -233,7 +245,7 @@ export function FuelExpenses() {
               <input type="number" required min="1" value={fuelLiters} onChange={e => setFuelLiters(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="0" />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-medium text-text-secondary uppercase">Amount ($)</label>
+              <label className="text-xs font-medium text-text-secondary uppercase">Amount (₹)</label>
               <input type="number" required min="1" value={fuelAmount} onChange={e => setFuelAmount(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="0" />
             </div>
           </div>
@@ -248,12 +260,32 @@ export function FuelExpenses() {
       <Modal isOpen={isExpenseModalOpen} onClose={() => setIsExpenseModalOpen(false)} title="Add Expense">
         <form onSubmit={handleAddExpense} className="space-y-4">
           <div className="space-y-1">
+            <label className="text-xs font-medium text-text-secondary uppercase">Vehicle (Optional)</label>
+            <select value={expenseVehicleId} onChange={e => setExpenseVehicleId(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent">
+              <option value="">No Specific Vehicle</option>
+              {vehicles.map(v => (
+                <option key={v.id} value={v.id}>{v.regNo} - {v.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1">
             <label className="text-xs font-medium text-text-secondary uppercase">Description</label>
             <input type="text" required value={expenseDescription} onChange={e => setExpenseDescription(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="e.g. Toll Fees" />
           </div>
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-text-secondary uppercase">Amount ($)</label>
-            <input type="number" required min="1" value={expenseAmount} onChange={e => setExpenseAmount(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="0" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-text-secondary uppercase">Type</label>
+              <select required value={expenseType} onChange={e => setExpenseType(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent">
+                <option value="Other">Other</option>
+                <option value="Toll">Toll</option>
+                <option value="Maintenance">Maintenance</option>
+                <option value="Parking">Parking</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-text-secondary uppercase">Amount (₹)</label>
+              <input type="number" required min="1" value={expenseAmount} onChange={e => setExpenseAmount(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="0" />
+            </div>
           </div>
           <div className="pt-2">
             <button type="submit" className="w-full bg-info hover:bg-info/80 text-white font-medium py-2 rounded-md transition-colors">

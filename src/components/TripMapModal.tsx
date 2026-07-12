@@ -1,22 +1,13 @@
 import React, { useEffect } from 'react';
 import { Modal } from './Modal';
-import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, useMap, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { StatusBadge } from './StatusBadge';
+import { getCoordinates } from '../utils/location';
 
-// Mock coordinates for common cities
-const CITY_COORDS: Record<string, [number, number]> = {
-  'Nagercoil': [8.1833, 77.4119],
-  'Tada': [13.5833, 80.0333],
-  'Chennai': [13.0827, 80.2707],
-  'Bangalore': [12.9716, 77.5946],
-  'Hyderabad': [17.3850, 78.4867],
-  'Mumbai': [19.0760, 72.8777],
-  'Delhi': [28.7041, 77.1025],
-  'Kochi': [9.9312, 76.2673]
-};
-const FALLBACK_COORD: [number, number] = [20.5937, 78.9629]; // Center of India
+const FALLBACK_SOURCE: [number, number] = [20.5937, 76.9629];
+const FALLBACK_DEST: [number, number] = [20.5937, 80.9629];
 
 const createPinIcon = (color: string) => L.divIcon({
   className: 'custom-pin',
@@ -48,8 +39,11 @@ interface TripMapModalProps {
 export function TripMapModal({ isOpen, onClose, trip, vehicle, driver }: TripMapModalProps) {
   if (!trip) return null;
 
-  const sourceCoords = CITY_COORDS[trip.route.source] || FALLBACK_COORD;
-  const destCoords = CITY_COORDS[trip.route.destination] || FALLBACK_COORD;
+  const sourceLookup = getCoordinates(trip.route.source);
+  const destLookup = getCoordinates(trip.route.destination);
+
+  const sourceCoords: [number, number] = sourceLookup ? [sourceLookup.lat, sourceLookup.lng] : FALLBACK_SOURCE;
+  const destCoords: [number, number] = destLookup ? [destLookup.lat, destLookup.lng] : FALLBACK_DEST;
 
   const title = (
     <div className="flex items-center gap-3">
@@ -72,8 +66,16 @@ export function TripMapModal({ isOpen, onClose, trip, vehicle, driver }: TripMap
               attribution='&copy; <a href="https://carto.com/">CartoDB</a>'
               url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             />
-            <Marker position={sourceCoords} icon={sourceIcon} />
-            <Marker position={destCoords} icon={destIcon} />
+            <Marker position={sourceCoords} icon={sourceIcon}>
+              {!sourceLookup && (
+                <Tooltip permanent direction="top" className="text-xs">Approximate location</Tooltip>
+              )}
+            </Marker>
+            <Marker position={destCoords} icon={destIcon}>
+              {!destLookup && (
+                <Tooltip permanent direction="top" className="text-xs">Approximate location</Tooltip>
+              )}
+            </Marker>
             <Polyline positions={[sourceCoords, destCoords]} pathOptions={{ color: '#E67E22', weight: 3, dashArray: '5, 10' }} />
             <MapBoundsFitter sourceCoords={sourceCoords} destCoords={destCoords} />
           </MapContainer>
@@ -94,12 +96,12 @@ export function TripMapModal({ isOpen, onClose, trip, vehicle, driver }: TripMap
           </div>
           <div>
             <p className="text-text-secondary text-xs uppercase mb-1">Planned Dist</p>
-            <p className="font-medium">{trip.plannedDistance} km</p>
+            <p className="font-medium">{trip.plannedDistance} km <span className="text-xs font-normal text-text-secondary">(est.)</span></p>
           </div>
           {trip.status === 'Completed' && (
             <div>
               <p className="text-text-secondary text-xs uppercase mb-1">Actual Dist / Fuel</p>
-              <p className="font-medium">{trip.metrics?.distanceCovered} km / {trip.metrics?.fuelConsumed}L</p>
+              <p className="font-medium">{trip.actualDistance ?? '-'} km / {trip.fuelConsumed ?? '-'}L</p>
             </div>
           )}
         </div>

@@ -33,7 +33,7 @@ def fleet_utilization(db: Session = Depends(get_db), _: User = Depends(require_r
     return {"utilization_pct": round(active / total * 100, 2) if total else 0, "active": active, "total": total}
 
 @router.get("/operational-cost")
-def operational_cost(db: Session = Depends(get_db), _: User = Depends(require_role("fleet_manager", "financial_analyst"))): return sorted(summaries(db), key=lambda row: row["total_operational_cost"], reverse=True)
+def operational_cost(db: Session = Depends(get_db), _: User = Depends(require_role("fleet_manager", "financial_analyst", "safety_officer"))): return sorted(summaries(db), key=lambda row: row["total_operational_cost"], reverse=True)
 
 @router.get("/vehicle-roi")
 def vehicle_roi(revenue: float = Query(default=0, ge=0), db: Session = Depends(get_db), _: User = Depends(require_role("fleet_manager", "financial_analyst"))):

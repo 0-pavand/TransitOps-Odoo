@@ -49,6 +49,8 @@ export interface Trip {
   driverId: string;
   cargoWeight: number;
   plannedDistance: number;
+  actualDistance?: number;
+  fuelConsumed?: number;
   createdAt: string;
 }
 

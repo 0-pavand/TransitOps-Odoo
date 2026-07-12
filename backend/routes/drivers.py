@@ -55,3 +55,9 @@ def update_status(driver_id: int, body: DriverStatusUpdate, db: Session = Depend
 @router.patch("/{driver_id}/safety-score", response_model=DriverResponse)
 def update_safety_score(driver_id: int, body: SafetyScoreUpdate, db: Session = Depends(get_db), _: User = Depends(require_role("safety_officer", "fleet_manager"))):
     driver = driver_or_404(db, driver_id); driver.safety_score = body.score; db.commit(); db.refresh(driver); return driver_response(driver)
+
+@router.delete("/{driver_id}", status_code=204)
+def delete_driver(driver_id: int, db: Session = Depends(get_db), _: User = Depends(require_role("fleet_manager", "safety_officer"))):
+    driver = driver_or_404(db, driver_id)
+    if driver.status == "On Trip": error(422, "Cannot delete a driver on trip", "DRIVER_ON_TRIP")
+    db.delete(driver); db.commit()

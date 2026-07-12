@@ -20,7 +20,7 @@ def total(year: int | None = None, db: Session = Depends(get_db), _: User = Depe
     return {"fuel_total": fuel, "maintenance_total": maintenance, "other_total": other, "grand_total": fuel + maintenance + other, "year": target_year}
 
 @router.get("", response_model=list[ExpenseResponse])
-def list_expenses(vehicle_id: int | None = None, type: str | None = None, trip_id: int | None = None, year: int | None = None, db: Session = Depends(get_db), _: User = Depends(require_role("fleet_manager", "dispatcher", "financial_analyst"))):
+def list_expenses(vehicle_id: int | None = None, type: str | None = None, trip_id: int | None = None, year: int | None = None, db: Session = Depends(get_db), _: User = Depends(require_role("fleet_manager", "dispatcher", "financial_analyst", "safety_officer"))):
     query = db.query(ExpenseLog)
     if vehicle_id: query = query.filter(ExpenseLog.vehicle_id == vehicle_id)
     if type: query = query.filter(ExpenseLog.type == type)

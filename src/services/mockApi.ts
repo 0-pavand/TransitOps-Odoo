@@ -36,6 +36,8 @@ const mapTrip = (t: any): Trip => ({
   driverId: String(t.driver_id),
   cargoWeight: Number(t.cargo_weight),
   plannedDistance: Number(t.planned_distance),
+  actualDistance: t.actual_distance ? Number(t.actual_distance) : undefined,
+  fuelConsumed: t.fuel_consumed ? Number(t.fuel_consumed) : undefined,
   createdAt: t.created_at,
 });
 
@@ -122,6 +124,20 @@ export const driverService = {
   updateDriverStatus: async (id: string, status: string): Promise<Driver> => {
     const res = await api.patch(`/drivers/${id}/status`, { status });
     return mapDriver(res.data);
+  },
+  renewDriver: async (id: string, driver: Driver, newExpiryDate: string): Promise<Driver> => {
+    const res = await api.patch(`/drivers/${id}`, {
+      name: driver.name,
+      license_id: driver.licenseId,
+      category: driver.category,
+      expiry_date: newExpiryDate,
+      safety_score: driver.safetyScore,
+      contact: driver.contact
+    });
+    return mapDriver(res.data);
+  },
+  deleteDriver: async (id: string): Promise<void> => {
+    await api.delete(`/drivers/${id}`);
   }
 };
 
