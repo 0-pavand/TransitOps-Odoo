@@ -196,3 +196,34 @@ export const expenseService = {
     return mapExpense(res.data);
   }
 };
+
+const mapUser = (u: any): User => ({
+  id: String(u.id),
+  name: u.name,
+  email: u.email,
+  role: u.role,
+  department: u.department || '',
+  status: u.status === 'active' ? 'Active' : 'Suspended',
+});
+
+export const settingsService = {
+  getUsers: async (): Promise<User[]> => {
+    const res = await api.get('/users');
+    return res.data.map(mapUser);
+  },
+  createUser: async (u: { name: string; email: string; role: string; department?: string; password: string }): Promise<User> => {
+    const res = await api.post('/users', {
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      department: u.department || '',
+      password: u.password,
+    });
+    return mapUser(res.data);
+  },
+  updateUser: async (id: string, updates: { role?: string; status?: string }): Promise<User> => {
+    const res = await api.patch(`/users/${id}`, updates);
+    return mapUser(res.data);
+  },
+};
+

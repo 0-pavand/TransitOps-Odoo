@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { mockUsers } from '../services/mockData';
+import React, { useEffect, useState } from 'react';
+import { settingsService } from '../services/mockApi';
+import { User } from '../types';
 import { Plus, Save, User as UserIcon } from 'lucide-react';
 import { Modal } from '../components/Modal';
 import toast from 'react-hot-toast';
@@ -7,6 +8,33 @@ import toast from 'react-hot-toast';
 export function Settings() {
   const [isSaving, setIsSaving] = useState(false);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+
+  // Real users from backend
+  const [users, setUsers] = useState<User[]>([]);
+  const [isUsersLoading, setIsUsersLoading] = useState(true);
+
+  // Add user form state
+  const [newName, setNewName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newRole, setNewRole] = useState('');
+  const [newDepartment, setNewDepartment] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    setIsUsersLoading(true);
+    try {
+      const data = await settingsService.getUsers();
+      setUsers(data);
+    } catch {
+      // silently fail if not fleet manager — other roles can't see users
+    } finally {
+      setIsUsersLoading(false);
+    }
+  };
 
   // Tab state
   const [activeTab, setActiveTab] = useState<'Users & Roles' | 'General Settings' | 'Integrations'>('Users & Roles');
@@ -47,10 +75,24 @@ export function Settings() {
     }, 800);
   };
 
-  const handleAddUser = (e: React.FormEvent) => {
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success('User added successfully');
-    setIsAddUserModalOpen(false);
+    try {
+      await settingsService.createUser({
+        name: newName,
+        email: newEmail,
+        role: newRole,
+        department: newDepartment,
+        password: newPassword,
+      });
+      toast.success('User added successfully');
+      setIsAddUserModalOpen(false);
+      setNewName(''); setNewEmail(''); setNewRole(''); setNewDepartment(''); setNewPassword('');
+      fetchUsers();
+    } catch (err: any) {
+      const msg = err.response?.data?.detail?.detail || err.response?.data?.detail || 'Failed to add user';
+      toast.error(msg);
+    }
   };
 
   const handleSaveOrg = (e: React.FormEvent) => {
@@ -157,7 +199,11 @@ export function Settings() {
             </div>
             
             <div className="space-y-3">
-              {mockUsers.map(user => (
+              {isUsersLoading ? (
+                <div className="text-center py-6"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-accent mx-auto"></div></div>
+              ) : users.length === 0 ? (
+                <p className="text-sm text-text-secondary text-center py-6">No users found.</p>
+              ) : users.map(user => (
                 <div key={user.id} className="bg-bg-card border border-border-subtle rounded-lg p-4 flex items-start space-x-3">
                   <div className="w-10 h-10 rounded-full bg-bg-input flex items-center justify-center flex-shrink-0">
                     <UserIcon className="w-5 h-5 text-text-secondary" />
@@ -529,21 +575,29 @@ export function Settings() {
         <form onSubmit={handleAddUser} className="space-y-4">
           <div className="space-y-1">
             <label className="text-xs font-medium text-text-secondary uppercase">Full Name</label>
-            <input type="text" required className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="e.g. Alice Smith" />
+            <input type="text" required value={newName} onChange={e => setNewName(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="e.g. Alice Smith" />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-text-secondary uppercase">Email Address</label>
-            <input type="email" required className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="alice@example.com" />
+            <input type="email" required value={newEmail} onChange={e => setNewEmail(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="alice@example.com" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-text-secondary uppercase">Department</label>
+            <input type="text" value={newDepartment} onChange={e => setNewDepartment(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="e.g. Operations" />
           </div>
           <div className="space-y-1">
             <label className="text-xs font-medium text-text-secondary uppercase">Role</label>
-            <select required className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent">
+            <select required value={newRole} onChange={e => setNewRole(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent">
               <option value="">Select Role</option>
               <option value="fleet_manager">Fleet Manager</option>
               <option value="dispatcher">Dispatcher</option>
               <option value="safety_officer">Safety Officer</option>
               <option value="financial_analyst">Financial Analyst</option>
             </select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-text-secondary uppercase">Password</label>
+            <input type="password" required value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full bg-bg-input border border-border-subtle rounded-md px-3 py-2 text-sm focus:outline-none focus:border-accent" placeholder="Temporary password" />
           </div>
           <div className="pt-2">
             <button type="submit" className="w-full bg-accent hover:bg-accent-hover text-white font-medium py-2 rounded-md transition-colors">
