@@ -6,7 +6,11 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/transitops")
+db_url = os.environ.get("DATABASE_URL", "postgresql://postgres:password@localhost:5432/transitops")
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+
+DATABASE_URL = db_url
 
 connect_args = {}
 if DATABASE_URL.startswith("sqlite"):
