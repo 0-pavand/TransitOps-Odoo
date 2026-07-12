@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -16,6 +16,9 @@ import {
 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useTheme } from '../context/ThemeContext';
+import { LocalAssistant } from './LocalAssistant';
+import { vehicleService, driverService, tripService, maintenanceService, expenseService } from '../services/mockApi';
+import { Vehicle, Driver, Trip, MaintenanceLog, ExpenseLog } from '../types';
 
 interface NavItem {
   name: string;
@@ -38,6 +41,28 @@ const navItems: NavItem[] = [
 export function Layout() {
   const { role, logout, user } = useAuth();
   const { theme, toggleTheme } = useTheme();
+
+  // Data for the AI assistant — loaded once on mount
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [maintenance, setMaintenance] = useState<MaintenanceLog[]>([]);
+  const [expenses, setExpenses] = useState<ExpenseLog[]>([]);
+
+  useEffect(() => {
+    // Load data for assistant silently — fail gracefully per role capabilities
+    vehicleService.getVehicles().then(setVehicles).catch(() => {});
+    tripService.getTrips().then(setTrips).catch(() => {});
+    if (role !== 'financial_analyst') {
+      driverService.getDrivers().then(setDrivers).catch(() => {});
+    }
+    if (role === 'fleet_manager' || role === 'safety_officer' || role === 'financial_analyst') {
+      maintenanceService.getMaintenanceLogs().then(setMaintenance).catch(() => {});
+    }
+    if (role !== 'safety_officer') {
+      expenseService.getExpenses().then(setExpenses).catch(() => {});
+    }
+  }, [role]);
 
   const allowedNavItems = navItems.filter(item => item.roles.includes(role || ''));
 
@@ -110,6 +135,18 @@ export function Layout() {
           <Outlet />
         </div>
       </main>
+
+      {/* AI Assistant — floating, role-scoped, fully offline */}
+      {role && (
+        <LocalAssistant
+          role={role as any}
+          vehicles={vehicles}
+          drivers={drivers}
+          trips={trips}
+          maintenance={maintenance}
+          expenses={expenses}
+        />
+      )}
     </div>
   );
 }
