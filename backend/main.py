@@ -25,7 +25,7 @@ async def lifespan(_: FastAPI):
     Base.metadata.create_all(bind=engine); seed_data(); yield
 
 app = FastAPI(title="TransitOps API", lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://localhost:3000"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003", "http://localhost:3004", "http://localhost:3005"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 @app.exception_handler(HTTPException)
 async def http_error(_: Request, exc: HTTPException):
