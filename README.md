@@ -374,7 +374,9 @@ This project is developed for educational, academic, and hackathon purposes. It 
 
 ## 👨‍💻 Developed By
 
-**TransitOps Team**
+Thee Forgists : Kavin Kumar S , Pavan D , Rajavel B
+
+Demo link : https://transit-ops-odoo-omega.vercel.app
 
 Smart Transport Operations Platform
 
