@@ -179,24 +179,17 @@ export function Drivers() {
                       <td className="px-6 py-2 text-text-secondary">{driver.contact}</td>
                       <td className="px-6 py-2"><StatusBadge status={driver.status} /></td>
                       {hasFullAccess && (
-                        <td className="px-6 py-2 text-right space-x-2">
-                          {driver.status === 'Available' && (
-                            <button 
-                              className="text-xs text-info hover:text-white px-2 py-1 rounded border border-info/30 hover:bg-info/10 transition-colors"
-                              onClick={() => handleUpdateStatus(driver.id, 'On Trip')}>
-                              On Trip
-                            </button>
-                          )}
-                          <button 
-                            className="text-xs text-text-secondary hover:text-white px-2 py-1 rounded border border-border-subtle hover:bg-bg-input transition-colors"
-                            onClick={() => handleUpdateStatus(driver.id, 'Off Duty')}>
-                            Off Duty
-                          </button>
-                          <button 
-                            className="text-xs text-danger hover:text-white px-2 py-1 rounded border border-danger/30 hover:bg-danger/10 transition-colors"
-                            onClick={() => handleUpdateStatus(driver.id, 'Suspended')}>
-                            Suspend
-                          </button>
+                        <td className="px-6 py-2 text-right">
+                          <select 
+                            value={driver.status}
+                            onChange={(e) => handleUpdateStatus(driver.id, e.target.value)}
+                            className="bg-bg-input text-xs border border-border-subtle rounded px-2 py-1 text-text-secondary focus:outline-none focus:border-accent cursor-pointer outline-none"
+                          >
+                            <option value="Available">Available</option>
+                            <option value="On Trip">On Trip</option>
+                            <option value="Off Duty">Off Duty</option>
+                            <option value="Suspended">Suspended</option>
+                          </select>
                         </td>
                       )}
                     </tr>

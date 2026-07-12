@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg-primary: #1A1A1A;
-  --color-bg-sidebar: #111111;
-  --color-bg-card: #242424;
-  --color-bg-input: #2A2A2A;
-  --color-bg-hover: #2F2F2F;
+  --color-bg-primary: var(--app-bg-primary);
+  --color-bg-sidebar: var(--app-bg-sidebar);
+  --color-bg-card: var(--app-bg-card);
+  --color-bg-input: var(--app-bg-input);
+  --color-bg-hover: var(--app-bg-hover);
   --color-accent: #E67E22;
   --color-accent-hover: #F0A500;
-  --color-border-subtle: #333333;
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #A0A0A0;
+  --color-border-subtle: var(--app-border-subtle);
+  --color-text-primary: var(--app-text-primary);
+  --color-text-secondary: var(--app-text-secondary);
   --color-success: #27AE60;
   --color-warning: #F39C12;
   --color-danger: #E74C3C;
@@ -20,6 +20,28 @@
 }
 
 @layer base {
+  :root {
+    --app-bg-primary: #1A1A1A;
+    --app-bg-sidebar: #111111;
+    --app-bg-card: #242424;
+    --app-bg-input: #2A2A2A;
+    --app-bg-hover: #2F2F2F;
+    --app-border-subtle: #333333;
+    --app-text-primary: #FFFFFF;
+    --app-text-secondary: #A0A0A0;
+  }
+
+  :root.light {
+    --app-bg-primary: #F3F4F6;
+    --app-bg-sidebar: #FFFFFF;
+    --app-bg-card: #FFFFFF;
+    --app-bg-input: #F9FAFB;
+    --app-bg-hover: #F3F4F6;
+    --app-border-subtle: #E5E7EB;
+    --app-text-primary: #111827;
+    --app-text-secondary: #6B7280;
+  }
+
   body {
     background-color: var(--color-bg-primary);
     color: var(--color-text-primary);

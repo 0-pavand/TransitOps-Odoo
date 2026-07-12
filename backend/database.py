@@ -7,7 +7,12 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/transitops")
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+
+connect_args = {}
+if DATABASE_URL.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
+
+engine = create_engine(DATABASE_URL, connect_args=connect_args, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 

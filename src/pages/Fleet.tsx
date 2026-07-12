@@ -201,21 +201,23 @@ export function Fleet() {
                     <td className="px-6 py-2">${vehicle.acqCost.toLocaleString()}</td>
                     <td className="px-6 py-2"><StatusBadge status={vehicle.status} /></td>
                     {isManager && (
-                      <td className="px-6 py-2 text-right space-x-2">
-                        {vehicle.status === 'Available' && (
-                          <button className="text-xs text-info hover:text-white px-2 py-1 rounded border border-info/30 hover:bg-info/10 transition-colors"
-                            onClick={() => handleUpdateStatus(vehicle.id, 'On Trip')}>
-                            On Trip
-                          </button>
-                        )}
-                        <button className="text-xs text-warning hover:text-white px-2 py-1 rounded border border-warning/30 hover:bg-warning/10 transition-colors"
-                          onClick={() => handleUpdateStatus(vehicle.id, 'In Shop')}>
-                          In Shop
-                        </button>
-                        <button className="text-xs text-danger hover:text-white px-2 py-1 rounded border border-danger/30 hover:bg-danger/10 transition-colors"
-                          onClick={() => handleRetire(vehicle.id)}>
-                          Retire
-                        </button>
+                      <td className="px-6 py-2 text-right">
+                        <select 
+                          value={vehicle.status}
+                          onChange={(e) => {
+                            if (e.target.value === 'Retired') {
+                              handleRetire(vehicle.id);
+                            } else {
+                              handleUpdateStatus(vehicle.id, e.target.value);
+                            }
+                          }}
+                          className="bg-bg-input text-xs border border-border-subtle rounded px-2 py-1 text-text-secondary focus:outline-none focus:border-accent cursor-pointer outline-none"
+                        >
+                          <option value="Available">Available</option>
+                          <option value="On Trip">On Trip</option>
+                          <option value="In Shop">In Shop</option>
+                          <option value="Retired">Retired</option>
+                        </select>
                       </td>
                     )}
                   </tr>

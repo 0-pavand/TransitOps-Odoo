@@ -10,9 +10,12 @@ import {
   Fuel, 
   BarChart3, 
   Settings,
-  LogOut
+  LogOut,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { cn } from '../utils/cn';
+import { useTheme } from '../context/ThemeContext';
 
 interface NavItem {
   name: string;
@@ -34,6 +37,7 @@ const navItems: NavItem[] = [
 
 export function Layout() {
   const { role, logout, user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const allowedNavItems = navItems.filter(item => item.roles.includes(role || ''));
 
@@ -87,8 +91,17 @@ export function Layout() {
             Smart Transport Operations Platform
           </div>
           <div className="flex items-center space-x-4">
-            <div className="w-2 h-2 rounded-full bg-success"></div>
-            <span className="text-xs text-text-secondary">System Online</span>
+            <button 
+              onClick={toggleTheme}
+              className="p-1.5 rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors"
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 rounded-full bg-success"></div>
+              <span className="text-xs text-text-secondary">System Online</span>
+            </div>
           </div>
         </header>
 

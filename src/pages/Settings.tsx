@@ -163,7 +163,7 @@ export function Settings() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-xl font-semibold">Settings & RBAC</h1>
+        <h1 className="text-xl font-semibold">Settings</h1>
       </div>
 
       <div className="flex border-b border-border-subtle overflow-x-auto">
@@ -183,10 +183,10 @@ export function Settings() {
       </div>
 
       {activeTab === 'Users & Roles' && (
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col max-w-3xl gap-6">
           
           {/* Left: User List */}
-          <div className="w-full lg:w-1/3 flex flex-col space-y-4">
+          <div className="w-full flex flex-col space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-sm font-semibold uppercase text-text-secondary tracking-wider">System Users</h2>
               <button 
@@ -224,50 +224,6 @@ export function Settings() {
               ))}
             </div>
           </div>
-
-          {/* Right: RBAC Table */}
-          <div className="w-full lg:w-2/3 bg-bg-card border border-border-subtle rounded-lg overflow-hidden flex flex-col">
-            <div className="p-4 border-b border-border-subtle flex justify-between items-center bg-bg-input">
-              <h2 className="text-sm font-semibold uppercase text-text-secondary tracking-wider">Role Permissions (RBAC)</h2>
-              <button 
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex items-center px-3 py-1.5 bg-accent hover:bg-accent-hover disabled:opacity-50 text-white rounded text-xs font-medium transition-colors"
-              >
-                <Save className="w-3.5 h-3.5 mr-1.5" />
-                {isSaving ? 'Saving...' : 'Save Changes'}
-              </button>
-            </div>
-            
-            <div className="overflow-x-auto p-4">
-              <table className="w-full text-sm text-left">
-                <thead className="text-xs text-text-secondary uppercase border-b border-border-subtle">
-                  <tr>
-                    <th className="px-4 py-3 font-semibold">Module / Feature</th>
-                    <th className="px-4 py-3 font-semibold text-center">Fleet Manager</th>
-                    <th className="px-4 py-3 font-semibold text-center">Dispatcher</th>
-                    <th className="px-4 py-3 font-semibold text-center">Safety Officer</th>
-                    <th className="px-4 py-3 font-semibold text-center">Fin. Analyst</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border-subtle">
-                  <RBACRow feature="Dashboard & KPIs" roles={[true, true, true, true]} />
-                  <RBACRow feature="Fleet (View)" roles={[true, true, false, false]} />
-                  <RBACRow feature="Fleet (Edit/Manage)" roles={[true, false, false, false]} />
-                  <RBACRow feature="Drivers (View)" roles={[true, true, true, false]} />
-                  <RBACRow feature="Drivers (Edit/Suspend)" roles={[true, false, true, false]} />
-                  <RBACRow feature="Trips (View)" roles={[true, true, true, false]} />
-                  <RBACRow feature="Trips (Dispatch)" roles={[true, true, false, false]} />
-                  <RBACRow feature="Maintenance (Log)" roles={[true, false, false, false]} />
-                  <RBACRow feature="Fuel & Expenses (View)" roles={[true, false, false, true]} />
-                  <RBACRow feature="Fuel & Expenses (Log)" roles={[true, true, false, true]} />
-                  <RBACRow feature="Analytics" roles={[true, false, true, true]} />
-                  <RBACRow feature="Settings & RBAC" roles={[true, false, false, false]} />
-                </tbody>
-              </table>
-            </div>
-          </div>
-
         </div>
       )}
 
